@@ -17,7 +17,10 @@ type config struct {
   // lsit files
   list bool
   del bool
+  // log destination writer
   wLog io.Writer
+  // archive directory
+  archive string
 }
 
 func main() {
@@ -30,6 +33,7 @@ func main() {
   ext := flag.String("ext", "", "File extension to filter out")
   size := flag.Int64("size", 0, "Minimum file size")
   logFile := flag.String("log", "", "Log deletes to this file")
+  archive := flag.String("archive", "", "Archive directory")
   flag.Parse()
 
   var (
@@ -52,6 +56,7 @@ func main() {
     list: *list,
     del: *del,
     wLog: f,
+    archive: *archive,
   }
 
   if err := run(*root, os.Stdout, c); err != nil {
@@ -79,6 +84,12 @@ func run(root string, out io.Writer, cfg config) error {
 
     if cfg.del {
       return delFile(path, delLogger)
+    }
+
+    if cfg.archive != "" {
+      if err := archiveFile(cfg.archive, root, path); err != nil {
+        return err
+      }
     }
 
     // List is the default option if nothing else was set
